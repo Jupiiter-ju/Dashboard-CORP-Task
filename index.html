@@ -1,0 +1,575 @@
+<title>Corp Task Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --surface-2: #ecebe3;
+    --border: #dfdcd0;
+    --text: #232520;
+    --text-muted: #6d6b60;
+    --accent: #2f5d8a;
+    --accent-soft: #e3ecf3;
+    --accent-text: #1f3f5c;
+    --danger: #a83b2e;
+    --danger-soft: #f5e2de;
+    --warning: #8f6412;
+    --warning-soft: #f4ead0;
+    --success: #276b48;
+    --success-soft: #dfeee4;
+    --shadow: 0 1px 2px rgba(35,37,32,.06), 0 8px 24px -12px rgba(35,37,32,.15);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1c19;
+      --surface: #232420;
+      --surface-2: #2b2c27;
+      --border: #3a3b34;
+      --text: #ece9e0;
+      --text-muted: #a4a195;
+      --accent: #7fb0dd;
+      --accent-soft: #24374a;
+      --accent-text: #cfe3f4;
+      --danger: #e58c7c;
+      --danger-soft: #4a2b26;
+      --warning: #e0b45a;
+      --warning-soft: #4a3c1c;
+      --success: #82c9a2;
+      --success-soft: #24402f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1c19;
+    --surface: #232420;
+    --surface-2: #2b2c27;
+    --border: #3a3b34;
+    --text: #ece9e0;
+    --text-muted: #a4a195;
+    --accent: #7fb0dd;
+    --accent-soft: #24374a;
+    --accent-text: #cfe3f4;
+    --danger: #e58c7c;
+    --danger-soft: #4a2b26;
+    --warning: #e0b45a;
+    --warning-soft: #4a3c1c;
+    --success: #82c9a2;
+    --success-soft: #24402f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    padding: 28px 32px 64px;
+  }
+  h1, h2, .num {
+    font-family: "Libre Franklin", system-ui, sans-serif;
+  }
+  .mono, .tabular {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header.top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .sync-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 14px 7px 10px;
+    box-shadow: var(--shadow);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex: none; }
+  .dot.stale { background: var(--warning); }
+  .dot.off { background: var(--text-muted); }
+  .refresh-btn {
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 2px 2px 6px;
+    border-left: 1px solid var(--border);
+    margin-left: 2px;
+  }
+  .refresh-btn:hover { color: var(--accent); }
+  .refresh-btn.spin { animation: spin .7s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .refresh-btn.spin { animation: none; } }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .stat .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .stat .num {
+    font-size: 30px;
+    font-weight: 800;
+    margin-top: 6px;
+    letter-spacing: -.02em;
+  }
+  .stat.overdue .num { color: var(--danger); }
+  .stat.soon .num { color: var(--warning); }
+  .stat.done .num { color: var(--success); }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  select, .clear-btn {
+    font: inherit;
+    font-size: 13.5px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+  select:focus, .clear-btn:focus, tr:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .clear-btn {
+    color: var(--text-muted);
+    cursor: pointer;
+    background: transparent;
+    border-style: dashed;
+  }
+  .clear-btn:hover { color: var(--text); border-color: var(--text-muted); }
+  .count-note { margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
+
+  .board {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .scroller { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  thead th {
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td {
+    padding: 12px 14px;
+    vertical-align: top;
+  }
+  td.task-cell { position: relative; padding-left: 18px; }
+  .stripe {
+    position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px;
+  }
+  .stripe.red { background: var(--danger); }
+  .stripe.amber { background: var(--warning); }
+  .stripe.green { background: var(--success); }
+  .stripe.neutral { background: var(--border); }
+
+  .title-line { font-weight: 600; margin-bottom: 2px; }
+  .sub-line { font-size: 12.5px; color: var(--text-muted); }
+  .note-line { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; max-width: 34ch; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .chip.red { background: var(--danger-soft); color: var(--danger); }
+  .chip.amber { background: var(--warning-soft); color: var(--warning); }
+  .chip.green { background: var(--success-soft); color: var(--success); }
+  .chip.neutral { background: var(--accent-soft); color: var(--accent-text); }
+
+  .priority { font-size: 12.5px; font-weight: 600; }
+  .priority.high { color: var(--danger); }
+  .priority.mid { color: var(--warning); }
+  .priority.low { color: var(--text-muted); }
+
+  .days { font-size: 13.5px; font-weight: 600; }
+  .days.red { color: var(--danger); }
+  .days.amber { color: var(--warning); }
+  .days.ok { color: var(--text-muted); }
+
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .type-tag {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  footer.legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  footer.legend span { display: inline-flex; align-items: center; gap: 6px; }
+  footer.legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+  @media (max-width: 720px) {
+    body { padding: 18px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Corp Service Executive</div>
+      <h1>ติดตามงานทีม</h1>
+    </div>
+    <div class="sync-pill" id="syncPill">
+      <span class="dot off" id="syncDot"></span>
+      <span id="syncText">กำลังโหลดข้อมูล…</span>
+      <button class="refresh-btn" id="refreshBtn" title="ดึงข้อมูลจากชีตตอนนี้">↻</button>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><div class="label">งานทั้งหมด</div><div class="num tabular" id="statTotal">–</div></div>
+    <div class="stat overdue"><div class="label">เลยกำหนด</div><div class="num tabular" id="statOverdue">–</div></div>
+    <div class="stat soon"><div class="label">ใกล้ครบกำหนด (≤3 วัน)</div><div class="num tabular" id="statSoon">–</div></div>
+    <div class="stat done"><div class="label">เสร็จแล้ว</div><div class="num tabular" id="statDone">–</div></div>
+  </section>
+
+  <div class="toolbar">
+    <select id="fOwner"><option value="">ผู้รับผิดชอบทั้งหมด</option></select>
+    <select id="fType"><option value="">ประเภทงานทั้งหมด</option></select>
+    <select id="fStatus"><option value="">สถานะทั้งหมด</option></select>
+    <button class="clear-btn" id="clearFilters">ล้างตัวกรอง</button>
+    <span class="count-note" id="countNote"></span>
+  </div>
+
+  <div class="board">
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30%">งาน</th>
+            <th>ผู้รับผิดชอบ</th>
+            <th>ประเภท</th>
+            <th>ความสำคัญ</th>
+            <th>กำหนดส่ง</th>
+            <th>คงเหลือ</th>
+            <th>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="7" class="empty">กำลังโหลดข้อมูล…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="legend">
+    <span><i style="background:var(--danger)"></i> เลยกำหนด ยังไม่เสร็จ</span>
+    <span><i style="background:var(--warning)"></i> ใกล้ครบกำหนด (≤3 วัน)</span>
+    <span><i style="background:var(--success)"></i> เสร็จแล้ว</span>
+    <span><i style="background:var(--border)"></i> ยังไม่ถึงกำหนด</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var state = { tasks: [], owner: "", type: "", status: "" };
+
+  function parseISO(s) {
+    if (!s) return null;
+    var d = new Date(s + "T00:00:00");
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function daysLeft(dueISO) {
+    var due = parseISO(dueISO);
+    if (!due) return null;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((due - today) / 86400000);
+  }
+
+  function fmtDate(iso) {
+    var d = parseISO(iso);
+    if (!d) return "–";
+    var dd = String(d.getDate()).padStart(2, "0");
+    var mm = String(d.getMonth() + 1).padStart(2, "0");
+    return dd + "/" + mm + "/" + d.getFullYear();
+  }
+
+  function urgency(task) {
+    if (task.status === "เสร็จแล้ว") return "green";
+    var dl = daysLeft(task.dueDate);
+    if (dl === null) return "neutral";
+    if (dl < 0) return "red";
+    if (dl <= 3) return "amber";
+    return "neutral";
+  }
+
+  function priorityClass(p) {
+    if (p === "สูง") return "high";
+    if (p === "กลาง") return "mid";
+    return "low";
+  }
+
+  function escapeHTML(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function populateFilterOptions() {
+    var owners = {}, types = {}, statuses = {};
+    state.tasks.forEach(function (t) {
+      if (t.owner) owners[t.owner] = 1;
+      if (t.type) types[t.type] = 1;
+      if (t.status) statuses[t.status] = 1;
+    });
+    fillSelect(document.getElementById("fOwner"), owners, "ผู้รับผิดชอบทั้งหมด", state.owner);
+    fillSelect(document.getElementById("fType"), types, "ประเภทงานทั้งหมด", state.type);
+    fillSelect(document.getElementById("fStatus"), statuses, "สถานะทั้งหมด", state.status);
+  }
+
+  function fillSelect(el, dict, allLabel, current) {
+    var keys = Object.keys(dict).sort();
+    el.innerHTML = '<option value="">' + allLabel + "</option>" +
+      keys.map(function (k) { return '<option value="' + escapeHTML(k) + '"' + (k === current ? " selected" : "") + ">" + escapeHTML(k) + "</option>"; }).join("");
+  }
+
+  function render() {
+    var total = state.tasks.length;
+    var overdue = 0, soon = 0, done = 0;
+    state.tasks.forEach(function (t) {
+      var u = urgency(t);
+      if (t.status === "เสร็จแล้ว") done++;
+      else if (u === "red") overdue++;
+      else if (u === "amber") soon++;
+    });
+    document.getElementById("statTotal").textContent = total;
+    document.getElementById("statOverdue").textContent = overdue;
+    document.getElementById("statSoon").textContent = soon;
+    document.getElementById("statDone").textContent = done;
+
+    var filtered = state.tasks.filter(function (t) {
+      return (!state.owner || t.owner === state.owner) &&
+        (!state.type || t.type === state.type) &&
+        (!state.status || t.status === state.status);
+    });
+
+    filtered.sort(function (a, b) {
+      var ua = urgency(a), ub = urgency(b);
+      var rank = { red: 0, amber: 1, neutral: 2, green: 3 };
+      if (rank[ua] !== rank[ub]) return rank[ua] - rank[ub];
+      var da = daysLeft(a.dueDate), db = daysLeft(b.dueDate);
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+
+    var rowsEl = document.getElementById("rows");
+    if (!filtered.length) {
+      rowsEl.innerHTML = '<tr><td colspan="7" class="empty">ไม่พบงานตามตัวกรองนี้</td></tr>';
+    } else {
+      rowsEl.innerHTML = filtered.map(function (t) {
+        var u = urgency(t);
+        var dl = daysLeft(t.dueDate);
+        var dlLabel = dl === null ? "–" : (dl === 0 ? "วันนี้" : (dl > 0 ? dl + " วัน" : Math.abs(dl) + " วัน"));
+        var dlClass = t.status === "เสร็จแล้ว" ? "ok" : (u === "red" ? "red" : (u === "amber" ? "amber" : "ok"));
+        var dlPrefix = t.status !== "เสร็จแล้ว" && dl !== null && dl < 0 ? "เลย " : "";
+        var chipClass = u === "neutral" ? "neutral" : u;
+        var chipText = t.status || "–";
+        return "<tr>" +
+          '<td class="task-cell"><span class="stripe ' + u + '"></span>' +
+          '<div class="title-line">' + escapeHTML(t.title || "(ไม่มีชื่องาน)") + "</div>" +
+          (t.lastUpdateNote ? '<div class="note-line">' + escapeHTML(t.lastUpdateNote) + "</div>" : "") +
+          "</td>" +
+          "<td>" + escapeHTML(t.owner || "–") + "</td>" +
+          '<td class="type-tag">' + escapeHTML(t.type || "–") + "</td>" +
+          '<td><span class="priority ' + priorityClass(t.priority) + '">' + escapeHTML(t.priority || "–") + "</span></td>" +
+          '<td class="mono">' + fmtDate(t.dueDate) + "</td>" +
+          '<td class="days ' + dlClass + ' tabular">' + dlPrefix + dlLabel + "</td>" +
+          '<td><span class="chip ' + chipClass + '">' + escapeHTML(chipText) + "</span></td>" +
+          "</tr>";
+      }).join("");
+    }
+
+    document.getElementById("countNote").textContent = filtered.length + " / " + total + " งาน";
+  }
+
+  document.getElementById("fOwner").addEventListener("change", function (e) { state.owner = e.target.value; render(); });
+  document.getElementById("fType").addEventListener("change", function (e) { state.type = e.target.value; render(); });
+  document.getElementById("fStatus").addEventListener("change", function (e) { state.status = e.target.value; render(); });
+  document.getElementById("clearFilters").addEventListener("click", function () {
+    state.owner = ""; state.type = ""; state.status = "";
+    populateFilterOptions();
+    render();
+  });
+
+  function setSyncUI(text, mode) {
+    document.getElementById("syncText").textContent = text;
+    document.getElementById("syncDot").className = "dot" + (mode ? " " + mode : "");
+  }
+
+  function relativeSync(date) {
+    if (!date) return null;
+    var mins = Math.round((Date.now() - date.getTime()) / 60000);
+    var mode = mins > 90 ? "stale" : "";
+    var label;
+    if (mins < 1) label = "อัปเดตล่าสุด: เมื่อสักครู่";
+    else if (mins < 60) label = "อัปเดตล่าสุด: " + mins + " นาทีที่แล้ว";
+    else label = "อัปเดตล่าสุด: " + Math.round(mins / 60) + " ชม. ที่แล้ว";
+    return { label: label, mode: mode };
+  }
+
+  var SHEET_URL = "https://docs.google.com/spreadsheets/d/1RB_CLpnvJeJXaS9LU3lKwEV-srS4Ha9MdiSBrOLTyr0/gviz/tq?tqx=out:json&gid=0";
+  var lastFetchedAt = null;
+  var tickTimer = null;
+
+  function gvizDateToISO(v) {
+    // v looks like "Date(2026,8,2)" — month is 0-indexed in gviz
+    if (typeof v !== "string") return null;
+    var m = /Date\((\d+),(\d+),(\d+)\)/.exec(v);
+    if (!m) return null;
+    var y = m[1], mo = String(Number(m[2]) + 1).padStart(2, "0"), d = String(m[3]).padStart(2, "0");
+    return y + "-" + mo + "-" + d;
+  }
+
+  function cellStr(c) { return c && c.v != null ? String(c.v) : ""; }
+  function cellDate(c) { return c && c.v != null ? gvizDateToISO(c.v) : null; }
+
+  function parseSheet(text) {
+    var start = text.indexOf("{");
+    var end = text.lastIndexOf("}");
+    var json = JSON.parse(text.slice(start, end + 1));
+    var rows = json.table.rows || [];
+    var tasks = [];
+    rows.forEach(function (row) {
+      var c = row.c || [];
+      var idCell = c[0];
+      if (!idCell || idCell.v == null) return; // skip the fixed example row (blank id)
+      var title = cellStr(c[1]);
+      if (!title) return; // skip blank placeholder rows
+      tasks.push({
+        id: String(idCell.v),
+        title: title,
+        type: cellStr(c[2]),
+        owner: cellStr(c[3]),
+        addedDate: cellDate(c[4]),
+        dueDate: cellDate(c[5]),
+        priority: cellStr(c[6]),
+        status: cellStr(c[7]),
+        lastUpdateDate: cellDate(c[9]),
+        lastUpdateNote: cellStr(c[10]),
+        note: cellStr(c[11])
+      });
+    });
+    return tasks;
+  }
+
+  async function loadData(isManual) {
+    var btn = document.getElementById("refreshBtn");
+    if (isManual && btn) { btn.classList.remove("spin"); void btn.offsetWidth; btn.classList.add("spin"); }
+    try {
+      var res = await fetch(SHEET_URL + "&_=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var text = await res.text();
+      state.tasks = parseSheet(text);
+      lastFetchedAt = new Date();
+      populateFilterOptions();
+      render();
+      var r = relativeSync(lastFetchedAt);
+      if (r) setSyncUI(r.label, r.mode);
+    } catch (e) {
+      if (!state.tasks.length) {
+        document.getElementById("rows").innerHTML = '<tr><td colspan="7" class="empty">โหลดข้อมูลจากชีตไม่สำเร็จ กด ↻ เพื่อลองใหม่</td></tr>';
+      }
+      setSyncUI("โหลดข้อมูลไม่สำเร็จ — ลองรีเฟรช", "off");
+    }
+  }
+
+  function tickClock() {
+    if (lastFetchedAt) {
+      var r = relativeSync(lastFetchedAt);
+      if (r) setSyncUI(r.label, r.mode);
+    }
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", function () { loadData(true); });
+
+  loadData(false);
+  setInterval(function () { loadData(false); }, 60 * 60 * 1000); // auto data refresh every hour
+  tickTimer = setInterval(tickClock, 30 * 1000); // keep the "x minutes ago" label current
+})();
+</script>
