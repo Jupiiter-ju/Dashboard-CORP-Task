@@ -19,7 +19,7 @@
  */
 
 var SHEET_ID = '1RB_CLpnvJeJXaS9LU3lKwEV-srS4Ha9MdiSBrOLTyr0';
-var SHEET_TAB_NAME = 'Task Tracking'; // reads this tab only — the "Task Update History" tab is not used yet
+var SHEET_TAB_NAME = 'ติดตามงาน'; // reads this tab only — the "ประวัติอัปเดตงาน" (update history) tab is not used yet
 var CACHE_KEY = 'taskCache';
 var CACHE_TS_KEY = 'taskCacheAt';
 var CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000; // if the hourly trigger ever stops firing, refetch anyway after 2h
@@ -51,7 +51,7 @@ function refreshCache() {
   for (var i = 0; i < values.length; i++) {
     var row = values[i];
     var id = row[0];
-    if (id === '' || id === null) continue; // skip header/instructions/example row (blank id)
+    if (!/^\d+$/.test(String(id).trim())) continue; // only real task rows have a numeric id; skips title/instructions/header/example rows
     var title = String(row[1] || '').trim();
     if (!title) continue; // skip blank placeholder rows
 
