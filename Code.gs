@@ -19,7 +19,7 @@
  */
 
 var SHEET_ID = '1RB_CLpnvJeJXaS9LU3lKwEV-srS4Ha9MdiSBrOLTyr0';
-var SHEET_GID = 0;
+var SHEET_TAB_NAME = 'Task Tracking'; // reads this tab only — the "Task Update History" tab is not used yet
 var CACHE_KEY = 'taskCache';
 var CACHE_TS_KEY = 'taskCacheAt';
 var CACHE_MAX_AGE_MS = 2 * 60 * 60 * 1000; // if the hourly trigger ever stops firing, refetch anyway after 2h
@@ -44,7 +44,7 @@ function doGet(e) {
 
 /** Rebuilds the cache from the live sheet. Called by the hourly trigger and as a fallback from doGet. */
 function refreshCache() {
-  var sheet = getSheetByGid_(SHEET_ID, SHEET_GID);
+  var sheet = getSheetByName_(SHEET_ID, SHEET_TAB_NAME);
   var values = sheet.getDataRange().getValues();
   var tasks = [];
 
@@ -98,11 +98,11 @@ function toISO_(v) {
   return null;
 }
 
-function getSheetByGid_(spreadsheetId, gid) {
+function getSheetByName_(spreadsheetId, name) {
   var ss = SpreadsheetApp.openById(spreadsheetId);
-  var sheets = ss.getSheets();
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].getSheetId() === gid) return sheets[i];
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    throw new Error('ไม่พบแท็บชื่อ "' + name + '" ในสเปรดชีต — ตรวจสอบชื่อแท็บให้ตรงกับตัวแปร SHEET_TAB_NAME');
   }
-  return ss.getSheets()[0]; // fallback to first sheet
+  return sheet;
 }
