@@ -2,59 +2,59 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
   :root {
-    --bg: #f5f3ee;
-    --surface: #ffffff;
-    --surface-2: #ecebe3;
-    --border: #dfdcd0;
-    --text: #232520;
-    --text-muted: #6d6b60;
-    --accent: #2f5d8a;
-    --accent-soft: #e3ecf3;
-    --accent-text: #1f3f5c;
-    --danger: #a83b2e;
-    --danger-soft: #f5e2de;
-    --warning: #8f6412;
-    --warning-soft: #f4ead0;
-    --success: #276b48;
-    --success-soft: #dfeee4;
-    --shadow: 0 1px 2px rgba(35,37,32,.06), 0 8px 24px -12px rgba(35,37,32,.15);
+    --bg: #f6f0e4;
+    --surface: #fffbf3;
+    --surface-2: #eee2ca;
+    --border: #ddccab;
+    --text: #2b2013;
+    --text-muted: #7a6a4d;
+    --accent: #8a5a2f;
+    --accent-soft: #f0e2c9;
+    --accent-text: #6b4420;
+    --danger: #a3382b;
+    --danger-soft: #f5e0da;
+    --warning: #9c6a12;
+    --warning-soft: #f6e7c6;
+    --success: #4c6b34;
+    --success-soft: #e4ead9;
+    --shadow: 0 1px 2px rgba(43,32,19,.08), 0 8px 24px -12px rgba(43,32,19,.2);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #1b1c19;
-      --surface: #232420;
-      --surface-2: #2b2c27;
-      --border: #3a3b34;
-      --text: #ece9e0;
-      --text-muted: #a4a195;
-      --accent: #7fb0dd;
-      --accent-soft: #24374a;
-      --accent-text: #cfe3f4;
-      --danger: #e58c7c;
-      --danger-soft: #4a2b26;
-      --warning: #e0b45a;
-      --warning-soft: #4a3c1c;
-      --success: #82c9a2;
-      --success-soft: #24402f;
+      --bg: #211a10;
+      --surface: #2b2216;
+      --surface-2: #34291a;
+      --border: #4a3c26;
+      --text: #efe4d0;
+      --text-muted: #b3a084;
+      --accent: #d9a45f;
+      --accent-soft: #43331d;
+      --accent-text: #eecb98;
+      --danger: #e28a72;
+      --danger-soft: #4a2c22;
+      --warning: #e3b95f;
+      --warning-soft: #453619;
+      --success: #a3c283;
+      --success-soft: #313f24;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #1b1c19;
-    --surface: #232420;
-    --surface-2: #2b2c27;
-    --border: #3a3b34;
-    --text: #ece9e0;
-    --text-muted: #a4a195;
-    --accent: #7fb0dd;
-    --accent-soft: #24374a;
-    --accent-text: #cfe3f4;
-    --danger: #e58c7c;
-    --danger-soft: #4a2b26;
-    --warning: #e0b45a;
-    --warning-soft: #4a3c1c;
-    --success: #82c9a2;
-    --success-soft: #24402f;
+    --bg: #211a10;
+    --surface: #2b2216;
+    --surface-2: #34291a;
+    --border: #4a3c26;
+    --text: #efe4d0;
+    --text-muted: #b3a084;
+    --accent: #d9a45f;
+    --accent-soft: #43331d;
+    --accent-text: #eecb98;
+    --danger: #e28a72;
+    --danger-soft: #4a2c22;
+    --warning: #e3b95f;
+    --warning-soft: #453619;
+    --success: #a3c283;
+    --success-soft: #313f24;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
   }
 
@@ -493,59 +493,19 @@
     return { label: label, mode: mode };
   }
 
-  var SHEET_URL = "https://docs.google.com/spreadsheets/d/1RB_CLpnvJeJXaS9LU3lKwEV-srS4Ha9MdiSBrOLTyr0/gviz/tq?tqx=out:json&gid=0";
+  // Apps Script Web App URL (deploy Code.gs, then paste the /exec URL here).
+  var APPS_SCRIPT_URL = "https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec";
   var lastFetchedAt = null;
   var tickTimer = null;
-
-  function gvizDateToISO(v) {
-    // v looks like "Date(2026,8,2)" — month is 0-indexed in gviz
-    if (typeof v !== "string") return null;
-    var m = /Date\((\d+),(\d+),(\d+)\)/.exec(v);
-    if (!m) return null;
-    var y = m[1], mo = String(Number(m[2]) + 1).padStart(2, "0"), d = String(m[3]).padStart(2, "0");
-    return y + "-" + mo + "-" + d;
-  }
-
-  function cellStr(c) { return c && c.v != null ? String(c.v) : ""; }
-  function cellDate(c) { return c && c.v != null ? gvizDateToISO(c.v) : null; }
-
-  function parseSheet(text) {
-    var start = text.indexOf("{");
-    var end = text.lastIndexOf("}");
-    var json = JSON.parse(text.slice(start, end + 1));
-    var rows = json.table.rows || [];
-    var tasks = [];
-    rows.forEach(function (row) {
-      var c = row.c || [];
-      var idCell = c[0];
-      if (!idCell || idCell.v == null) return; // skip the fixed example row (blank id)
-      var title = cellStr(c[1]);
-      if (!title) return; // skip blank placeholder rows
-      tasks.push({
-        id: String(idCell.v),
-        title: title,
-        type: cellStr(c[2]),
-        owner: cellStr(c[3]),
-        addedDate: cellDate(c[4]),
-        dueDate: cellDate(c[5]),
-        priority: cellStr(c[6]),
-        status: cellStr(c[7]),
-        lastUpdateDate: cellDate(c[9]),
-        lastUpdateNote: cellStr(c[10]),
-        note: cellStr(c[11])
-      });
-    });
-    return tasks;
-  }
 
   async function loadData(isManual) {
     var btn = document.getElementById("refreshBtn");
     if (isManual && btn) { btn.classList.remove("spin"); void btn.offsetWidth; btn.classList.add("spin"); }
     try {
-      var res = await fetch(SHEET_URL + "&_=" + Date.now(), { cache: "no-store" });
+      var res = await fetch(APPS_SCRIPT_URL + "?_=" + Date.now(), { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
-      var text = await res.text();
-      state.tasks = parseSheet(text);
+      var data = await res.json();
+      state.tasks = data.tasks || [];
       lastFetchedAt = new Date();
       populateFilterOptions();
       render();
@@ -553,7 +513,7 @@
       if (r) setSyncUI(r.label, r.mode);
     } catch (e) {
       if (!state.tasks.length) {
-        document.getElementById("rows").innerHTML = '<tr><td colspan="7" class="empty">โหลดข้อมูลจากชีตไม่สำเร็จ กด ↻ เพื่อลองใหม่</td></tr>';
+        document.getElementById("rows").innerHTML = '<tr><td colspan="7" class="empty">โหลดข้อมูลจาก Apps Script ไม่สำเร็จ กด ↻ เพื่อลองใหม่</td></tr>';
       }
       setSyncUI("โหลดข้อมูลไม่สำเร็จ — ลองรีเฟรช", "off");
     }
