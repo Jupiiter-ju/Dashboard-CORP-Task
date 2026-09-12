@@ -134,6 +134,105 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .refresh-btn.spin { animation: none; } }
 
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 100px;
+    padding: 9px 16px 9px 13px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .add-btn:hover { filter: brightness(1.08); }
+  .add-btn .plus { font-size: 16px; line-height: 1; font-weight: 700; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 12, 13, .45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8vh 16px;
+    z-index: 50;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 420px;
+    padding: 22px;
+  }
+  .modal h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0 0 16px;
+    font-family: "Libre Franklin", system-ui, sans-serif;
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .field input, .field select {
+    width: 100%;
+    font: inherit;
+    font-size: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 10px;
+  }
+  .field input:focus, .field select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .form-error {
+    font-size: 13px;
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 14px;
+  }
+  .form-error[hidden] { display: none; }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .btn-secondary, .btn-primary {
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+  .btn-secondary { background: transparent; color: var(--text-muted); }
+  .btn-secondary:hover { color: var(--text); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary:disabled { opacity: .6; cursor: default; }
+
   .stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -292,10 +391,13 @@
       <div class="eyebrow">Corp Service Executive</div>
       <h1>ติดตามงานทีม</h1>
     </div>
-    <div class="sync-pill" id="syncPill">
-      <span class="dot off" id="syncDot"></span>
-      <span id="syncText">กำลังโหลดข้อมูล…</span>
-      <button class="refresh-btn" id="refreshBtn" title="ดึงข้อมูลจากชีตตอนนี้">↻</button>
+    <div class="header-actions">
+      <div class="sync-pill" id="syncPill">
+        <span class="dot off" id="syncDot"></span>
+        <span id="syncText">กำลังโหลดข้อมูล…</span>
+        <button class="refresh-btn" id="refreshBtn" title="ดึงข้อมูลจากชีตตอนนี้">↻</button>
+      </div>
+      <button class="add-btn" id="addTaskBtn" type="button"><span class="plus">+</span> เพิ่มงาน</button>
     </div>
   </header>
 
@@ -341,6 +443,55 @@
     <span><i style="background:var(--success)"></i> เสร็จแล้ว</span>
     <span><i style="background:var(--border)"></i> ยังไม่ถึงกำหนด</span>
   </footer>
+</div>
+
+<div class="modal-overlay" id="addModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+    <h2 id="addModalTitle">เพิ่มงานใหม่</h2>
+    <form id="addTaskForm">
+      <div class="form-error" id="addFormError" hidden></div>
+      <div class="field">
+        <label for="fTitle">ชื่องาน</label>
+        <input type="text" id="fTitle" required autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fTaskOwner">ผู้รับผิดชอบ</label>
+          <select id="fTaskOwner">
+            <option value="Jinnie">Jinnie</option>
+            <option value="Patty">Patty</option>
+            <option value="Yok">Yok</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fTaskType">ประเภทงาน</label>
+          <select id="fTaskType">
+            <option value="Payment">Payment</option>
+            <option value="Admin">Admin</option>
+            <option value="Asist">Asist</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fTaskPriority">ความสำคัญ</label>
+          <select id="fTaskPriority">
+            <option value="สูง">สูง</option>
+            <option value="กลาง" selected>กลาง</option>
+            <option value="ต่ำ">ต่ำ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fTaskDue">วันที่ต้องการงาน/ต้องส่ง</label>
+          <input type="date" id="fTaskDue">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="addModalCancel">ยกเลิก</button>
+        <button type="submit" class="btn-primary" id="addModalSubmit">บันทึกงาน</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -527,6 +678,80 @@
   }
 
   document.getElementById("refreshBtn").addEventListener("click", function () { loadData(true); });
+
+  // --- Add task modal ---
+  var overlay = document.getElementById("addModalOverlay");
+  var addForm = document.getElementById("addTaskForm");
+  var addErrorEl = document.getElementById("addFormError");
+  var addSubmitBtn = document.getElementById("addModalSubmit");
+
+  function openAddModal() {
+    addForm.reset();
+    addErrorEl.hidden = true;
+    overlay.hidden = false;
+    document.getElementById("fTitle").focus();
+  }
+
+  function closeAddModal() {
+    overlay.hidden = true;
+  }
+
+  document.getElementById("addTaskBtn").addEventListener("click", openAddModal);
+  document.getElementById("addModalCancel").addEventListener("click", closeAddModal);
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeAddModal();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !overlay.hidden) closeAddModal();
+  });
+
+  addForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var title = document.getElementById("fTitle").value.trim();
+    if (!title) {
+      addErrorEl.textContent = "กรุณาระบุชื่องาน";
+      addErrorEl.hidden = false;
+      return;
+    }
+    var body = {
+      title: title,
+      owner: document.getElementById("fTaskOwner").value,
+      type: document.getElementById("fTaskType").value,
+      priority: document.getElementById("fTaskPriority").value,
+      dueDate: document.getElementById("fTaskDue").value,
+      status: "รอดำเนินการ"
+    };
+    addErrorEl.hidden = true;
+    addSubmitBtn.disabled = true;
+    addSubmitBtn.textContent = "กำลังบันทึก…";
+    try {
+      var res = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // avoids a CORS preflight Apps Script can't answer
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var data = await res.json();
+      if (!data.ok) throw new Error(data.error || "บันทึกไม่สำเร็จ");
+      if (data.payload && data.payload.tasks) {
+        state.tasks = data.payload.tasks;
+        lastFetchedAt = new Date();
+        populateFilterOptions();
+        render();
+        var r = relativeSync(lastFetchedAt);
+        if (r) setSyncUI(r.label, r.mode);
+      } else {
+        loadData(false);
+      }
+      closeAddModal();
+    } catch (err) {
+      addErrorEl.textContent = "บันทึกงานไม่สำเร็จ ลองใหม่อีกครั้ง";
+      addErrorEl.hidden = false;
+    } finally {
+      addSubmitBtn.disabled = false;
+      addSubmitBtn.textContent = "บันทึกงาน";
+    }
+  });
 
   loadData(false);
   setInterval(function () { loadData(false); }, 60 * 60 * 1000); // auto data refresh every hour

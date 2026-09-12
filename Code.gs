@@ -77,6 +77,70 @@ function refreshCache() {
   return payload;
 }
 
+/**
+ * Adds a new task row from the frontend's "add task" form.
+ * Expects a JSON POST body: { title, type, owner, priority, dueDate }
+ * (dueDate as "yyyy-MM-dd", the rest as plain strings). Appends right
+ * after the last real data row (not sheet.getLastRow(), which can be
+ * inflated by formatting on far-below empty rows), fills in the
+ * "คงเหลือ (วัน)" formula to match existing rows, then refreshes the cache
+ * so the change is visible immediately without waiting for the next fetch.
+ */
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    var title = String(body.title || '').trim();
+    if (!title) throw new Error('กรุณาระบุชื่องาน');
+
+    var sheet = getSheetByName_(SHEET_ID, SHEET_TAB_NAME);
+    var values = sheet.getDataRange().getValues();
+    var maxId = 0;
+    var lastDataRow = 0;
+    for (var i = 0; i < values.length; i++) {
+      var idVal = values[i][0];
+      if (/^\d+$/.test(String(idVal).trim())) {
+        var n = Number(idVal);
+        if (n > maxId) maxId = n;
+        lastDataRow = i + 1; // 1-indexed sheet row
+      }
+    }
+    var newId = maxId + 1;
+    var targetRow = lastDataRow + 1;
+
+    var rowValues = [
+      newId,
+      title,
+      String(body.type || ''),
+      String(body.owner || ''),
+      new Date(),
+      parseISODate_(body.dueDate),
+      String(body.priority || ''),
+      String(body.status || 'รอดำเนินการ'),
+      '',
+      '',
+      '',
+      ''
+    ];
+    sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
+    sheet.getRange(targetRow, 9).setFormula('=IF(F' + targetRow + '="","",F' + targetRow + '-TODAY())');
+
+    var payload = refreshCache();
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, id: newId, payload: payload }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: String(err && err.message || err) }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function parseISODate_(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!m) return '';
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
 /** One-off setup: run manually from the Apps Script editor. */
 function setupTrigger() {
   // Clear any existing refreshCache triggers first so re-running this is safe.
